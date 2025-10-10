@@ -29,6 +29,9 @@ void initialize() {
 	pros::lcd::set_text(1, "Samit Meow");
 	pros::lcd::set_text(2, config::version);
 	pros::lcd::set_text(3, config::upload_message);
+	tongueMech.set_value(LOW);
+	colorSort.set_value(LOW);
+	indexer.set_value(LOW);
 
 	pros::lcd::register_btn1_cb(on_center_button);
 }
@@ -62,7 +65,12 @@ void competition_initialize() {}
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
-void autonomous() {}
+void autonomous() {
+	// set position to x:0, y:0, heading:0
+    chassis.setPose(0, 0, 0);
+    // turn to face heading 90 with a very long timeout
+    chassis.turnToHeading(90, 100000);
+}
 
 /**
  * Runs the operator control code. This function will be started in its own task
@@ -80,6 +88,8 @@ void autonomous() {}
 void opcontrol() {
 
 	bool indexer_state = LOW;
+	bool tongue_mech_state = LOW;
+	bool colorsort_state = LOW;
 
 	while (true) {
 
@@ -87,17 +97,35 @@ void opcontrol() {
 		int vertical = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y); // Y axis of the left joystick
         int horizontal = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X); // X axis of the right joystick
 
-        chassis.arcade(vertical, horizontal); // arcarde drive
+        chassis.arcade(vertical,
+					   horizontal,
+					   false, // enables drive curve
+					   0.45 // slightly prioritizes moving forward over turning
+		); // arcarde drive
 
 		// intake
-		if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) intake.move(300);
-		else intake.move(0);
+		if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
+			intake.move(300);
+		} else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
+			intake.move(-300);
+		} else {
+			intake.move(0);
+		}
 
 		// indexer
-		// if(controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)) {
-		// 	indexer_state = !indexer_state;
-		// 	indexer.set_value(indexer_state);
-		// }
+		if(controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
+			indexer_state = !indexer_state;
+			indexer.set_value(indexer_state);
+		}
+
+		// tongue mech
+		else if(controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)) {
+			tongue_mech_state = !tongue_mech_state;
+			tongueMech.set_value(tongue_mech_state);
+		}
+
+		// color sort
+		// TODO
 
 		pros::delay(20); // Run for 20 ms then update
 	}

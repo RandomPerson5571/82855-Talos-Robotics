@@ -22,10 +22,14 @@ namespace config {
     // Intake
     inline const std::initializer_list<int8_t> intake_motor_ports = {-13, -14};
     inline const char indexer_ADI = 'B';
+    inline const char tongue_mech_ADI = 'C';
 
     // Color sort
     inline const char color_sort_ADI = 'A';
     inline const int8_t color_sensor_port = 8;
+
+    inline const uint red_threshold = 200; // TODO
+    inline const uint blue_threshold = 200; // TODO
 
     // Imu
     inline const int8_t imu_port = 10;
@@ -74,7 +78,8 @@ inline lemlib::Drivetrain driveTrain(&leftMotorGroup, &rightMotorGroup, config::
 
 // Pneumatics
 inline pros::ADIDigitalOut indexer(config::indexer_ADI);
-inline pros::ADIDigitalOut color_sort(config::color_sort_ADI);
+inline pros::ADIDigitalOut colorSort(config::color_sort_ADI);
+inline pros::ADIDigitalOut tongueMech(config::tongue_mech_ADI);
 
 // Imu
 inline pros::Imu imu(config::imu_port);
