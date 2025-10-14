@@ -6,8 +6,8 @@
 
 namespace config {
     // Upload info
-    inline const std::string version = "Version 1.0.0";
-    inline const std::string upload_message = "dt";
+    inline const std::string version = "Version 1.1.0";
+    inline const std::string upload_message = "colorsort";
 
     // Drivetrain
     inline const double dt_track_width = 13;
@@ -28,8 +28,8 @@ namespace config {
     inline const char color_sort_ADI = 'A';
     inline const int8_t color_sensor_port = 8;
 
-    inline const uint red_threshold = 200; // TODO
-    inline const uint blue_threshold = 200; // TODO
+    inline const std::array<uint, 2> red_threshold = {0, 200}; // TODO
+    inline const std::array<uint, 2> blue_threshold = {0, 200}; // TODO
 
     // Imu
     inline const int8_t imu_port = 10;
@@ -78,7 +78,7 @@ inline lemlib::Drivetrain driveTrain(&leftMotorGroup, &rightMotorGroup, config::
 
 // Pneumatics
 inline pros::ADIDigitalOut indexer(config::indexer_ADI);
-inline pros::ADIDigitalOut colorSort(config::color_sort_ADI);
+inline pros::ADIDigitalOut trapdoor(config::color_sort_ADI);
 inline pros::ADIDigitalOut tongueMech(config::tongue_mech_ADI);
 
 // Imu
@@ -103,6 +103,7 @@ inline lemlib::ExpoDriveCurve throttleCurve(3, // joystick deadband (out of 127)
                                             10, // minimum output for movement (out of 127)
                                             1.02 // curve gain (a - value)
 );
+
 inline lemlib::ExpoDriveCurve steerCurve(3, // joystick deadband (out of 127)
                                         10, // minimum output for movement (out of 127)
                                         1.016 // curve gain (a - value)

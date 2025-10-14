@@ -26,11 +26,18 @@ void on_center_button() {
  */
 void initialize() {
 	pros::lcd::initialize();
-	pros::lcd::set_text(1, "Samit Meow");
-	pros::lcd::set_text(2, config::version);
-	pros::lcd::set_text(3, config::upload_message);
+	while (true) {
+        pros::lcd::print(0, "X: %f", chassis.getPose().x);
+        pros::lcd::print(1, "Y: %f", chassis.getPose().y);
+        pros::lcd::print(2, "Angle: %f", chassis.getPose().theta);
+	}
+	pros::lcd::set_text(4, config::version);
+	pros::lcd::set_text(5, config::upload_message);
+	pros::lcd::set_text(6, "Samit Meow");
+
+
 	tongueMech.set_value(LOW);
-	colorSort.set_value(LOW);
+	trapdoor.set_value(LOW);
 	indexer.set_value(LOW);
 
 	pros::lcd::register_btn1_cb(on_center_button);
@@ -85,11 +92,101 @@ void autonomous() {
  * operator control task will be stopped. Re-enabling the robot will restart the
  * task, not resume it from where it left off.
  */
+
+# include <queue>
+
+bool run_color_sort = false;
+// opposition color (the color to be ejected)
+uint opp_color = 1; // 1 = red, 2 = blue
+uint intakeDelay = 250; // time it takes for a ball to move to the next position in ms
+std::queue<uint> ball_colors_queue;
+pros::Mutex color_sort_mutex;
+
+
+void detectBallColorsTask() {
+
+	if(run_color_sort && controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
+		pros::delay(100);
+	}
+
+	if(run_color_sort && controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
+		uint hue = color_sensor.get_hue();
+		uint ball_color = 0; // 0 = none, 1 = red, 2 = blue
+
+		if (hue >= config::red_threshold[0] && hue <= config::red_threshold[1]) {
+			ball_color = 1;
+		} else if (hue >= config::blue_threshold[0] && hue <= config::blue_threshold[1]) {
+			ball_color = 2;
+		}
+
+		color_sort_mutex.take(TIMEOUT_MAX);
+		ball_colors_queue.push(ball_color);
+		color_sort_mutex.give();
+
+	}
+}
+
+void sortBallsTask() {
+
+	if(run_color_sort & controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
+		pros::delay(110);
+	}
+
+	if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1) && run_color_sort) {
+		color_sort_mutex.take(TIMEOUT_MAX); 
+		if(ball_colors_queue.size() > 0) {
+			if(ball_colors_queue.front() == opp_color) {
+				std::cout << "opening trapdoor" << std::endl;
+				trapdoor.set_value(HIGH);
+				ball_colors_queue.pop();
+				color_sort_mutex.give();
+				pros::delay(intakeDelay);
+				color_sort_mutex.take(TIMEOUT_MAX);
+				if(ball_colors_queue.front() != opp_color) {
+					trapdoor.set_value(LOW);
+				}
+			} else {
+				ball_colors_queue.pop();
+				color_sort_mutex.give();
+				pros::delay(intakeDelay);
+			}
+		} else {
+			color_sort_mutex.give();
+			pros::delay(intakeDelay*5); // number of balls that can fit in the region before the trapdoor * intakeDelay
+			color_sort_mutex.take(TIMEOUT_MAX);
+
+			if(ball_colors_queue.size() > 0 && ball_colors_queue.front() == opp_color) {
+				std::cout << "opening trapdoor" << std::endl;
+				trapdoor.set_value(HIGH);
+				ball_colors_queue.pop();
+				color_sort_mutex.give();
+				pros::delay(intakeDelay);
+				color_sort_mutex.take(TIMEOUT_MAX);
+				if(ball_colors_queue.front() != opp_color) {
+					trapdoor.set_value(LOW);
+				}
+			} else if(ball_colors_queue.size() > 0) {
+				ball_colors_queue.pop(); // assumes the ball has passed the trap door and is not the opp color
+				color_sort_mutex.give();
+				pros::delay(intakeDelay);
+			} else {
+				color_sort_mutex.give();
+			}
+		}
+	}
+}
+
 void opcontrol() {
+
+	if (run_color_sort) {
+		pros::Task color_sensor_task(detectBallColorsTask);
+		pros::Task sort_balls_task(sortBallsTask);
+	}
 
 	bool indexer_state = LOW;
 	bool tongue_mech_state = LOW;
-	bool colorsort_state = LOW;
+
+	// 0 = blue, 1 = red
 
 	while (true) {
 
@@ -103,8 +200,13 @@ void opcontrol() {
 					   0.45 // slightly prioritizes moving forward over turning
 		); // arcarde drive
 
+		// toggle color sort
+		if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
+			run_color_sort = !run_color_sort;
+		}
+
 		// intake
-		if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
+		else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
 			intake.move(300);
 		} else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
 			intake.move(-300);
@@ -123,10 +225,7 @@ void opcontrol() {
 			tongue_mech_state = !tongue_mech_state;
 			tongueMech.set_value(tongue_mech_state);
 		}
-
-		// color sort
-		// TODO
-
+		
 		pros::delay(20); // Run for 20 ms then update
 	}
 }
