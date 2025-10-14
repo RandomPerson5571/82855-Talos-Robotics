@@ -32,7 +32,7 @@ namespace config {
     inline const std::array<uint, 2> blue_threshold = {0, 200}; // TODO
 
     // Imu
-    inline const int8_t imu_port = 10;
+    inline const int8_t imu_port = 7;
     inline const double imu_wheel_diameter = 2.75;
     inline const double imu_wheel_distance = 0;
 
@@ -51,7 +51,7 @@ namespace config {
     inline const double lateral_large_error_range_timeout = 500;
     inline const double lateral_slew = 20;
 
-     // Angular PID
+    // Angular PID
     inline const double angular_kP = 3;
     inline const double angular_kI = 0.1;
     inline const double angular_kD = 18.0;
@@ -77,22 +77,22 @@ inline pros::MotorGroup intake(config::intake_motor_ports);
 inline lemlib::Drivetrain driveTrain(&leftMotorGroup, &rightMotorGroup, config::dt_track_width, config::dt_wheel_diameter, config::dt_rpm, config::dt_horizontal_drift);
 
 // Pneumatics
-inline pros::ADIDigitalOut indexer(config::indexer_ADI);
-inline pros::ADIDigitalOut trapdoor(config::color_sort_ADI);
-inline pros::ADIDigitalOut tongueMech(config::tongue_mech_ADI);
+// inline pros::ADIDigitalOut indexer(config::indexer_ADI);
+// inline pros::ADIDigitalOut trapdoor(config::color_sort_ADI);
+// inline pros::ADIDigitalOut tongueMech(config::tongue_mech_ADI);
 
-// Imu
+// // Imu
 inline pros::Imu imu(config::imu_port);
 
-// Encoders
+// // Encoders
 inline pros::adi::Encoder verticalEncoder(config::verticalEncoder_port, true); // true --> reversed
 
-// Tracking Wheels
+// // Tracking Wheels
 inline lemlib::TrackingWheel verticalTrackingWheel(&verticalEncoder, config::imu_wheel_diameter, config::imu_wheel_distance);
 
-// Sensors
+// // Sensors
 inline lemlib::OdomSensors sensors(nullptr, nullptr, &verticalTrackingWheel, nullptr, &imu);
-inline pros::Optical color_sensor(config::color_sensor_port);
+// inline pros::Optical color_sensor(config::color_sensor_port);
 
 // PID
 inline lemlib::ControllerSettings lateral_controller(config::lateral_kP, config::lateral_kI, config::lateral_kD, config::lateral_anti_windup, config::lateral_small_error_range, config::lateral_small_error_range_timeout, config::lateral_large_error_range, config::lateral_large_error_range_timeout, config::lateral_slew);

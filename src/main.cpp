@@ -12,7 +12,7 @@ void on_center_button() {
 	static bool pressed = false;
 	pressed = !pressed;
 	if (pressed) {
-		pros::lcd::set_text(2, "I was pressed!");
+		pros::lcd::set_text(2, "i was pressed!");
 	} else {
 		pros::lcd::clear_line(2);
 	}
@@ -24,6 +24,7 @@ void on_center_button() {
  * All other competition modes are blocked by initialize; it is recommended
  * to keep execution time for this mode under a few seconds.
  */
+
 void initialize() {
 	pros::lcd::initialize();
 	while (true) {
@@ -36,9 +37,9 @@ void initialize() {
 	pros::lcd::set_text(6, "Samit Meow");
 
 
-	tongueMech.set_value(LOW);
-	trapdoor.set_value(LOW);
-	indexer.set_value(LOW);
+	// tongueMech.set_value(LOW);
+	// trapdoor.set_value(LOW);
+	// indexer.set_value(LOW);
 
 	pros::lcd::register_btn1_cb(on_center_button);
 }
@@ -103,85 +104,85 @@ std::queue<uint> ball_colors_queue;
 pros::Mutex color_sort_mutex;
 
 
-void detectBallColorsTask() {
+// void detectBallColorsTask() {
 
-	if(run_color_sort && controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
-		pros::delay(100);
-	}
+// 	if(run_color_sort && controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
+// 		pros::delay(100);
+// 	}
 
-	if(run_color_sort && controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
-		uint hue = color_sensor.get_hue();
-		uint ball_color = 0; // 0 = none, 1 = red, 2 = blue
+// 	if(run_color_sort && controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
+// 		uint hue = color_sensor.get_hue();
+// 		uint ball_color = 0; // 0 = none, 1 = red, 2 = blue
 
-		if (hue >= config::red_threshold[0] && hue <= config::red_threshold[1]) {
-			ball_color = 1;
-		} else if (hue >= config::blue_threshold[0] && hue <= config::blue_threshold[1]) {
-			ball_color = 2;
-		}
+// 		if (hue >= config::red_threshold[0] && hue <= config::red_threshold[1]) {
+// 			ball_color = 1;
+// 		} else if (hue >= config::blue_threshold[0] && hue <= config::blue_threshold[1]) {
+// 			ball_color = 2;
+// 		}
 
-		color_sort_mutex.take(TIMEOUT_MAX);
-		ball_colors_queue.push(ball_color);
-		color_sort_mutex.give();
+// 		color_sort_mutex.take(TIMEOUT_MAX);
+// 		ball_colors_queue.push(ball_color);
+// 		color_sort_mutex.give();
 
-	}
-}
+// 	}
+// }
 
-void sortBallsTask() {
+// void sortBallsTask() {
 
-	if(run_color_sort & controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
-		pros::delay(110);
-	}
+// 	if(run_color_sort & controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
+// 		pros::delay(110);
+// 	}
 
-	if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1) && run_color_sort) {
-		color_sort_mutex.take(TIMEOUT_MAX); 
-		if(ball_colors_queue.size() > 0) {
-			if(ball_colors_queue.front() == opp_color) {
-				std::cout << "opening trapdoor" << std::endl;
-				trapdoor.set_value(HIGH);
-				ball_colors_queue.pop();
-				color_sort_mutex.give();
-				pros::delay(intakeDelay);
-				color_sort_mutex.take(TIMEOUT_MAX);
-				if(ball_colors_queue.front() != opp_color) {
-					trapdoor.set_value(LOW);
-				}
-			} else {
-				ball_colors_queue.pop();
-				color_sort_mutex.give();
-				pros::delay(intakeDelay);
-			}
-		} else {
-			color_sort_mutex.give();
-			pros::delay(intakeDelay*5); // number of balls that can fit in the region before the trapdoor * intakeDelay
-			color_sort_mutex.take(TIMEOUT_MAX);
+// 	if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1) && run_color_sort) {
+// 		color_sort_mutex.take(TIMEOUT_MAX); 
+// 		if(ball_colors_queue.size() > 0) {
+// 			if(ball_colors_queue.front() == opp_color) {
+// 				std::cout << "opening trapdoor" << std::endl;
+// 				trapdoor.set_value(HIGH);
+// 				ball_colors_queue.pop();
+// 				color_sort_mutex.give();
+// 				pros::delay(intakeDelay);
+// 				color_sort_mutex.take(TIMEOUT_MAX);
+// 				if(ball_colors_queue.front() != opp_color) {
+// 					trapdoor.set_value(LOW);
+// 				}
+// 			} else {
+// 				ball_colors_queue.pop();
+// 				color_sort_mutex.give();
+// 				pros::delay(intakeDelay);
+// 			}
+// 		} else {
+// 			color_sort_mutex.give();
+// 			pros::delay(intakeDelay*5); // number of balls that can fit in the region before the trapdoor * intakeDelay
+// 			color_sort_mutex.take(TIMEOUT_MAX);
 
-			if(ball_colors_queue.size() > 0 && ball_colors_queue.front() == opp_color) {
-				std::cout << "opening trapdoor" << std::endl;
-				trapdoor.set_value(HIGH);
-				ball_colors_queue.pop();
-				color_sort_mutex.give();
-				pros::delay(intakeDelay);
-				color_sort_mutex.take(TIMEOUT_MAX);
-				if(ball_colors_queue.front() != opp_color) {
-					trapdoor.set_value(LOW);
-				}
-			} else if(ball_colors_queue.size() > 0) {
-				ball_colors_queue.pop(); // assumes the ball has passed the trap door and is not the opp color
-				color_sort_mutex.give();
-				pros::delay(intakeDelay);
-			} else {
-				color_sort_mutex.give();
-			}
-		}
-	}
-}
+// 			if(ball_colors_queue.size() > 0 && ball_colors_queue.front() == opp_color) {
+// 				std::cout << "opening trapdoor" << std::endl;
+// 				trapdoor.set_value(HIGH);
+// 				ball_colors_queue.pop();
+// 				color_sort_mutex.give();
+// 				pros::delay(intakeDelay);
+// 				color_sort_mutex.take(TIMEOUT_MAX);
+// 				if(ball_colors_queue.front() != opp_color) {
+// 					trapdoor.set_value(LOW);
+// 				}
+// 			} else if(ball_colors_queue.size() > 0) {
+// 				ball_colors_queue.pop(); // assumes the ball has passed the trap door and is not the opp color
+// 				color_sort_mutex.give();
+// 				pros::delay(intakeDelay);
+// 			} else {
+// 				color_sort_mutex.give();
+// 			}
+// 		}
+// 	}
+// }
 
 void opcontrol() {
 
-	if (run_color_sort) {
-		pros::Task color_sensor_task(detectBallColorsTask);
-		pros::Task sort_balls_task(sortBallsTask);
-	}
+	// if (run_color_sort) {
+	// 	pros::Task color_sensor_task(detectBallColorsTask);
+	// 	pros::Task sort_balls_task(sortBallsTask);
+	// }
 
 	bool indexer_state = LOW;
 	bool tongue_mech_state = LOW;
@@ -201,12 +202,12 @@ void opcontrol() {
 		); // arcarde drive
 
 		// toggle color sort
-		if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
-			run_color_sort = !run_color_sort;
-		}
+		// if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
+		// 	run_color_sort = !run_color_sort;
+		// }
 
 		// intake
-		else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
+		if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1)) {
 			intake.move(300);
 		} else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2)) {
 			intake.move(-300);
@@ -215,16 +216,16 @@ void opcontrol() {
 		}
 
 		// indexer
-		if(controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
-			indexer_state = !indexer_state;
-			indexer.set_value(indexer_state);
-		}
+		// if(controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
+		// 	indexer_state = !indexer_state;
+		// 	indexer.set_value(indexer_state);
+		// }
 
-		// tongue mech
-		else if(controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)) {
-			tongue_mech_state = !tongue_mech_state;
-			tongueMech.set_value(tongue_mech_state);
-		}
+		// // tongue mech
+		// else if(controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)) {
+		// 	tongue_mech_state = !tongue_mech_state;
+		// 	tongueMech.set_value(tongue_mech_state);
+		// }
 		
 		pros::delay(20); // Run for 20 ms then update
 	}
